@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mongo:
+    image: mongo:7.0.2
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - ./data:/data
+    entrypoint: [ "sh", "-c", "mongod --bind_ip_all && sleep 10 && mongoimport --db person-info-generator --collection names --file ./names.json --jsonArray && mongoimport --db person-info-generator --collection surnames --file ./surnames.json --jsonArray" ]
+    networks:
+      - api-network
+  node:
+    build: ./
+    container_name: node
+    restart: always
+    env_file:
+      - ./node.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      - mongo
+    volumes:
+      - ./:/src
+    networks:
+      - api-network
+
+volumes:
+  mongo-data:
+
+networks:
+  api-network:
+    driver: bridge
